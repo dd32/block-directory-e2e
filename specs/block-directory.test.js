@@ -44,6 +44,11 @@ const payload = github.context.payload.client_payload || {};
 const pluginSlug = process.env.PLUGIN_SLUG || payload.slug;
 const searchTerm = process.env.SEARCH_TERM || payload.searchTerm || `slug:${ pluginSlug }`;
 
+const screenshotDate = (new Date).toISOString().replace(/[^\d.]/gi, '');
+function screenshotFileFormat( type ) {
+	return `screenshots/${ pluginSlug }/${ type }-${ screenshotDate }.png`;
+}
+
 // Variable to hold any encounted JS errors.
 let jsError = false;
 page.on( 'pageerror', ( error ) => {
@@ -106,13 +111,10 @@ describe( `Block Directory Tests`, () => {
 				'.block-directory-downloadable-blocks-list li:first-child button';
 			await page.waitForSelector( addBtnSelector );
 
-			// Output a screenshot of the Search Results for debugging.
-			core.setOutput(
-				'screenshotSearchResults',
-				await (
-					await page.$( '.block-directory-downloadable-blocks-list li:first-child' )
-				 ).screenshot( { encoding: 'base64' } )
-			);
+			// Create a screenshot of the Search Results for debugging.
+			await (
+				await page.$( '.block-directory-downloadable-blocks-list li:first-child' )
+			).screenshot( { path: screenshotFileFormat`searchResults` } )
 
 			// Add the block
 			await page.click( addBtnSelector );
@@ -159,14 +161,11 @@ describe( `Block Directory Tests`, () => {
 
 			// Get a screenshot of the block.
 			try {
-				core.setOutput(
-					'screenshotBlock',
-					await (
-						await page.waitForSelector(
-							'.is-root-container .wp-block:not([data-type^="core/"])'
-						)
-					 ).screenshot( { encoding: 'base64' } )
-				);
+				await (
+					await page.waitForSelector(
+						'.is-root-container .wp-block:not([data-type^="core/"])'
+					)
+				).screenshot( { path: screenshotFileFormat`block` } );
 			} catch ( e ) {
 				// Ignore any error here, the test should still succeed.
 			}

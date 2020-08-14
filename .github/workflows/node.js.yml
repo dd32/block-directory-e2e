@@ -17,8 +17,6 @@ jobs:
       scripts: ${{ steps.testRunDirectory.outputs.scripts }}
       styles: ${{ steps.testRunDirectory.outputs.styles }}
       blocks: ${{ steps.testRunDirectory.outputs.blocks }}
-      screenshotSearchResults: ${{ steps.testRunDirectory.outputs.screenshotSearchResults }}
-      screenshotBlock: ${{ steps.testRunDirectory.outputs.screenshotBlock }}
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
@@ -31,9 +29,15 @@ jobs:
       run: npm run wp-env start
     - name: Modify folder permissions
       run: docker exec -t $( docker ps -qf "name=tests" ) chmod -R 767 /var/www/html/wp-content
+    - name: Create Screenshots Directory
+      run: mkdir -p screenshots/${{ github.event.client_payload.slug }}
     - name: Run End to End Tests
       id: testRunDirectory
       run: npm run test:e2e
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Store Screenshots
+        path: screenshots/
 
   run_publish:
     runs-on: ubuntu-latest
